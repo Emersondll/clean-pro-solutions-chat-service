@@ -1,7 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat.controller,ChatController,0,28,0,0,0,5,0,4,0,4
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat.dto,ChatMessageRequest,0,9,0,0,0,1,0,1,0,1
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat.dto,ChatMessageResponse,0,18,0,0,0,1,0,1,0,1
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat.exception,ChatRoomNotFoundException,0,5,0,0,0,2,0,1,0,1
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat.service.impl,ChatServiceImpl,30,175,1,3,6,50,3,11,2,10
-clean-pro-solutions-chat-service,br.com.cleanprosolutions.chat,ChatServiceApplication,8,0,0,0,3,0,2,0,2,0
