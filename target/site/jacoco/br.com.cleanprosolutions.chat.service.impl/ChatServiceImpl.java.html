@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">clean-pro-solutions-chat-service</a> &gt; <a href="index.source.html" class="el_package">br.com.cleanprosolutions.chat.service.impl</a> &gt; <span class="el_source">ChatServiceImpl.java</span></div><h1>ChatServiceImpl.java</h1><pre class="source lang-java linenums">package br.com.cleanprosolutions.chat.service.impl;
+
+import br.com.cleanprosolutions.chat.document.ChatMessage;
+import br.com.cleanprosolutions.chat.document.ChatRoom;
+import br.com.cleanprosolutions.chat.dto.ChatMessageRequest;
+import br.com.cleanprosolutions.chat.dto.ChatMessageResponse;
+import br.com.cleanprosolutions.chat.exception.ChatRoomNotFoundException;
+import br.com.cleanprosolutions.chat.repository.ChatMessageRepository;
+import br.com.cleanprosolutions.chat.repository.ChatRoomRepository;
+import br.com.cleanprosolutions.chat.service.ChatService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * Implementation of {@link ChatService}.
+ *
+ * &lt;p&gt;Real-time delivery is achieved via Server-Sent Events. An in-memory registry
+ * ({@code emitters}) maps each room to its active SSE connections. When a message
+ * is saved, all subscribers are notified immediately.&lt;/p&gt;
+ *
+ * @author Clean Pro Solutions Team
+ * @since 1.0.0
+ */
+<span class="fc" id="L32">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class ChatServiceImpl implements ChatService {
+
+    private static final long SSE_TIMEOUT_MS = 30 * 60 * 1000L;
+
+    private final ChatRoomRepository roomRepository;
+    private final ChatMessageRepository messageRepository;
+
+    /** Room ID → active SSE emitters for that room. */
+    private final Map&lt;String, CopyOnWriteArrayList&lt;SseEmitter&gt;&gt; emitters = new ConcurrentHashMap&lt;&gt;();
+
+    @Override
+    public String getOrCreateRoom(final String clientId, final String contractorId, final String contractId) {
+<span class="fc" id="L47">        return roomRepository.findByContractId(contractId)</span>
+<span class="fc" id="L48">                .map(ChatRoom::getId)</span>
+<span class="fc" id="L49">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L50">                    final ChatRoom room = ChatRoom.builder()</span>
+<span class="fc" id="L51">                            .clientId(clientId)</span>
+<span class="fc" id="L52">                            .contractorId(contractorId)</span>
+<span class="fc" id="L53">                            .contractId(contractId)</span>
+<span class="fc" id="L54">                            .build();</span>
+<span class="fc" id="L55">                    final String id = roomRepository.save(room).getId();</span>
+<span class="fc" id="L56">                    log.info(&quot;Created chat room {} for contract {}&quot;, id, contractId);</span>
+<span class="fc" id="L57">                    return id;</span>
+                });
+    }
+
+    @Override
+    public SseEmitter subscribe(final String roomId) {
+<span class="fc" id="L63">        assertRoomExists(roomId);</span>
+
+<span class="fc" id="L65">        final SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);</span>
+<span class="fc" id="L66">        final CopyOnWriteArrayList&lt;SseEmitter&gt; roomEmitters =</span>
+<span class="fc" id="L67">                emitters.computeIfAbsent(roomId, k -&gt; new CopyOnWriteArrayList&lt;&gt;());</span>
+<span class="fc" id="L68">        roomEmitters.add(emitter);</span>
+
+<span class="pc" id="L70">        final Runnable cleanup = () -&gt; roomEmitters.remove(emitter);</span>
+<span class="fc" id="L71">        emitter.onCompletion(cleanup);</span>
+<span class="fc" id="L72">        emitter.onTimeout(cleanup);</span>
+<span class="pc" id="L73">        emitter.onError(ex -&gt; cleanup.run());</span>
+
+<span class="fc" id="L75">        log.info(&quot;Client subscribed to room {}&quot;, roomId);</span>
+<span class="fc" id="L76">        return emitter;</span>
+    }
+
+    @Override
+    public ChatMessageResponse sendMessage(final String roomId, final ChatMessageRequest request) {
+<span class="fc" id="L81">        assertRoomExists(roomId);</span>
+
+<span class="fc" id="L83">        final ChatMessage saved = messageRepository.save(ChatMessage.builder()</span>
+<span class="fc" id="L84">                .roomId(roomId)</span>
+<span class="fc" id="L85">                .senderId(request.senderId())</span>
+<span class="fc" id="L86">                .content(request.content())</span>
+<span class="fc" id="L87">                .build());</span>
+
+<span class="fc" id="L89">        final ChatMessageResponse response = toResponse(saved);</span>
+<span class="fc" id="L90">        broadcast(roomId, response);</span>
+<span class="fc" id="L91">        return response;</span>
+    }
+
+    @Override
+    public List&lt;ChatMessageResponse&gt; getHistory(final String roomId) {
+<span class="fc" id="L96">        assertRoomExists(roomId);</span>
+<span class="fc" id="L97">        return messageRepository.findByRoomIdOrderBySentAtAsc(roomId).stream()</span>
+<span class="fc" id="L98">                .map(this::toResponse)</span>
+<span class="fc" id="L99">                .toList();</span>
+    }
+
+    private void assertRoomExists(final String roomId) {
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (!roomRepository.existsById(roomId)) {</span>
+<span class="fc" id="L104">            throw new ChatRoomNotFoundException(roomId);</span>
+        }
+<span class="fc" id="L106">    }</span>
+
+    private void broadcast(final String roomId, final ChatMessageResponse response) {
+<span class="fc" id="L109">        final List&lt;SseEmitter&gt; roomEmitters = emitters.getOrDefault(roomId, new CopyOnWriteArrayList&lt;&gt;());</span>
+<span class="fc" id="L110">        final List&lt;SseEmitter&gt; dead = new java.util.ArrayList&lt;&gt;();</span>
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        for (final SseEmitter emitter : roomEmitters) {</span>
+            try {
+<span class="nc" id="L114">                emitter.send(SseEmitter.event().name(&quot;message&quot;).data(response));</span>
+<span class="nc" id="L115">            } catch (IOException e) {</span>
+<span class="nc" id="L116">                log.warn(&quot;Failed to send SSE to subscriber in room {}, removing&quot;, roomId);</span>
+<span class="nc" id="L117">                dead.add(emitter);</span>
+<span class="nc" id="L118">            }</span>
+<span class="nc" id="L119">        }</span>
+<span class="fc" id="L120">        roomEmitters.removeAll(dead);</span>
+<span class="fc" id="L121">    }</span>
+
+    private ChatMessageResponse toResponse(final ChatMessage message) {
+<span class="fc" id="L124">        return new ChatMessageResponse(</span>
+<span class="fc" id="L125">                message.getId(),</span>
+<span class="fc" id="L126">                message.getRoomId(),</span>
+<span class="fc" id="L127">                message.getSenderId(),</span>
+<span class="fc" id="L128">                message.getContent(),</span>
+<span class="fc" id="L129">                message.getSentAt()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
