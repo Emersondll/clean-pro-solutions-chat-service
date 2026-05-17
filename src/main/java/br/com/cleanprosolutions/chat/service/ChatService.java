@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Contract for chat room operations and real-time message delivery.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 public interface ChatService {

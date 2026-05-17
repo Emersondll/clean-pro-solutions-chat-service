@@ -26,7 +26,7 @@ import java.util.List;
  * <p>Clients subscribe to {@code GET /chat/{roomId}/stream} (SSE) to receive messages live,
  * and send messages via {@code POST /chat/{roomId}/messages}.</p>
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @Tag(name = "Chat", description = "Real-time chat operations")

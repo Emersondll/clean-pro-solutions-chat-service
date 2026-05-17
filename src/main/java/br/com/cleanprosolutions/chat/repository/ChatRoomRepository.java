@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * Repository for {@link ChatRoom} persistence.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 public interface ChatRoomRepository extends MongoRepository<ChatRoom, String> {

@@ -5,7 +5,7 @@ import java.time.Instant;
 /**
  * Outbound response representing a single chat message.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 public record ChatMessageResponse(

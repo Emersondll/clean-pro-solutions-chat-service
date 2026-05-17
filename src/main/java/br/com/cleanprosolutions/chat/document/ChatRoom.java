@@ -15,7 +15,7 @@ import java.time.Instant;
  * <p>A room is uniquely identified by the triplet (clientId, contractorId, contractId).
  * Each active contract gets its own isolated conversation channel.</p>
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @Data

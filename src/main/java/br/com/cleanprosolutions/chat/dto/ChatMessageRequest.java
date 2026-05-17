@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Inbound request for sending a chat message.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 public record ChatMessageRequest(

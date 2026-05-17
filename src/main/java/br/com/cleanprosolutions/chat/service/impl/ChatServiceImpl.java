@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * ({@code emitters}) maps each room to its active SSE connections. When a message
  * is saved, all subscribers are notified immediately.</p>
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @Slf4j

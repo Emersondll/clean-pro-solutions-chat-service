@@ -3,7 +3,7 @@ package br.com.cleanprosolutions.chat.exception;
 /**
  * Thrown when a requested chat room does not exist.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 public class ChatRoomNotFoundException extends RuntimeException {

@@ -16,7 +16,7 @@ import java.time.Instant;
  * <p>Messages are indexed by {@code roomId} to support efficient retrieval
  * of a conversation's history.</p>
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @Data

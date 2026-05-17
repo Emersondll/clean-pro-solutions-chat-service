@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * <p>Provides real-time WebSocket/STOMP chat between clients and contractors,
  * with message persistence in MongoDB.</p>
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @SpringBootApplication

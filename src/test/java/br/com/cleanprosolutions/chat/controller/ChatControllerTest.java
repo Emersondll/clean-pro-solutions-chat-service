@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link ChatController}.
  *
- * @author Clean Pro Solutions Team
+ * @author Emerson Lima
  * @since 1.0.0
  */
 @ExtendWith(MockitoExtension.class)
